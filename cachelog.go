@@ -43,7 +43,18 @@ func main() {
 	var heap, free, used float32
 	pid := "none"
 
-	exact := flag.Bool("exact", false, "Get values from the the non SI-suffixed columns")
+	flag.Usage = func() {
+		man := []string{
+			"NAME",
+			"%s\n\nDESCRIPTION",
+			"Reads object-server.log and outputs the memory usage metrics",
+			"suitable for feeding into gnuplot.\n\nOPTIONS\n\n",
+		}
+		usage := fmt.Sprintf(strings.Join(man, "\n  "), os.Args[0])
+		fmt.Fprint(os.Stderr, usage)
+		flag.PrintDefaults()
+	}
+	exact := flag.Bool("exact", false, "(TODO) Get values from the the non SI-suffixed columns")
 	flag.Parse()
 
 	fmt.Println("pid date time heap free used")
