@@ -10,6 +10,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 )
 
 func toBytes(str string) float32 {
@@ -37,6 +38,30 @@ func deBracket(str string) string {
 	return str
 }
 
+var firstTime time.Time
+var lastTime time.Time
+
+func checkContinuity(date, hms string) {
+	t, err := time.Parse("02/01/06 15:04:05", date+" "+hms)
+	if err != nil {
+		log.Fatal(date, hms, err)
+	}
+	if lastTime == firstTime {
+		lastTime = t
+		return
+	}
+	if lastTime.Before(t) {
+		lastTime = t
+		return
+	}
+	if lastTime.Equal(t) {
+		lastTime = t
+		return
+	}
+	fmt.Fprintf(os.Stderr, "Backward time jump detected: %s %s\n", date, hms)
+	lastTime = t
+}
+
 func main() {
 	ret := 0
 	re := regexp.MustCompile(`\[space\.cache-clean\] Current heap size`)
@@ -60,8 +85,8 @@ func main() {
 	fmt.Println("pid date time heap free used")
 
 	files := []string{"-"}
-	if len(os.Args) >= 2 {
-		files = os.Args[1:]
+	if len(flags.Args()) > 0 {
+		files = flags.Args()
 	}
 
 	var src io.Reader
@@ -91,6 +116,7 @@ func main() {
 			}
 			pid = tokens[0]
 			date, time := tokens[2], tokens[3][0:len(tokens[3])-1]
+			checkContinuity(date, time)
 			if *exact {
 				fmt.Println("TODO use exact")
 			} else {
