@@ -13,6 +13,16 @@ import (
 	"time"
 )
 
+func exactToBytes(str string) float32 {
+	str = strings.TrimRight(str, "],")
+	str = strings.TrimLeft(str, "[")
+	n, err := strconv.ParseFloat(str, 32)
+	if err != nil {
+		log.Fatal(str, err)
+	}
+	return float32(n)
+}
+
 func toBytes(str string) float32 {
 	n, err := strconv.ParseFloat(str[0:len(str)-2], 32)
 	if err != nil {
@@ -85,8 +95,8 @@ func main() {
 	fmt.Println("pid date time heap free used")
 
 	files := []string{"-"}
-	if len(flags.Args()) > 0 {
-		files = flags.Args()
+	if len(flag.Args()) > 0 {
+		files = flag.Args()
 	}
 
 	var src io.Reader
@@ -118,7 +128,9 @@ func main() {
 			date, time := tokens[2], tokens[3][0:len(tokens[3])-1]
 			checkContinuity(date, time)
 			if *exact {
-				fmt.Println("TODO use exact")
+				heap = exactToBytes(tokens[11])
+				free = exactToBytes(tokens[14])
+				used = exactToBytes(tokens[17])
 			} else {
 				heap = toBytes(tokens[10])
 				free = toBytes(tokens[13])
