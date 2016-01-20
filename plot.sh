@@ -14,6 +14,8 @@ OPTIONS
 	Show this help message
     -d <duration>
 	Limit xrange max to <duration>, e.g: -d '1 hour'
+    -n
+	Do not open the resulting png
     -s <since>
 	Limit xrange min to <since>, e.g: -s '1 day ago'
     -T <title prefix>
@@ -31,7 +33,8 @@ height=500
 theme=white
 since=
 duration=
-while getopts d:hW:H:s:T:t: opt
+view_graph=t
+while getopts d:hW:H:ns:T:t: opt
 do
 	case "$opt" in
 		d)
@@ -42,6 +45,9 @@ do
 			;;
 		H)
 			height=$OPTARG
+			;;
+		n)
+			view_graph=
 			;;
 		s)
 			since=$OPTARG
@@ -86,7 +92,8 @@ log=$1
 png_file=$log.png
 xmin=
 xmax=
-timefmt='%d/%m/%y %H:%M:%S'
+#timefmt='%d/%m/%y %H:%M:%S'
+timefmt='%Y-%m-%d %H:%M:%S'
 log_start=
 if [ -n "$since" ]; then
 	xmin=\"$(date --utc -d "$since" +"$timefmt")\"
@@ -118,22 +125,7 @@ set ytics textcolor rgb \"$fg\";
 set grid linecolor rgb \"gray\";
 
 plot '$log' using 2:\"heap\" with lines, '' using 2:\"used\" with lines;" >$png_file
-echo qiv $png_file &&
-qiv $png_file
-
-#https://gist.github.com/tetsuok/2639931
-## Change colors of elements in Gnuplot
-#
-## change a color of border.
-#set border lw 3 lc rgb "white"
-#
-## change text colors of  tics
-#set xtics textcolor rgb "white"
-#set ytics textcolor rgb "white"
-#
-## change text colors of labels
-#set xlabel "X" textcolor rgb "white"
-#set ylabel "Y" textcolor rgb "white"
-#
-## change a text color of key
-#set key textcolor rgb "white"
+if [ "$view_graph" = t ]; then
+	echo qiv $png_file &&
+	qiv $png_file
+fi
