@@ -16,6 +16,9 @@ OPTIONS
 	Limit xrange max to <duration>, e.g: -d '1 hour'
     -n
 	Do not open the resulting png
+    -o <type>
+	Set output type - <type> is either png or dumb.
+	Default is png.
     -s <since>
 	Limit xrange min to <since>, e.g: -s '1 day ago'
     -T <title prefix>
@@ -34,7 +37,8 @@ theme=white
 since=
 duration=
 view_graph=t
-while getopts d:hW:H:ns:T:t: opt
+terminal_type=png
+while getopts d:hW:H:no:s:T:t: opt
 do
 	case "$opt" in
 		d)
@@ -51,6 +55,9 @@ do
 			;;
 		s)
 			since=$OPTARG
+			;;
+		o)
+			terminal_type=$OPTARG
 			;;
 		T)
 			titlePrefix="$OPTARG "
@@ -86,13 +93,24 @@ else
   exit 1
 fi
 
+case "$terminal_type" in
+	png)
+		set_terminal="set terminal png size $width,$height background rgb\"$bg\""
+		;;
+	dumb)
+		set_terminal="set terminal dumb feed ${COLUMNS:-80} ${ROWS:-24}"
+		echo "set_terminal=$set_terminal"
+		;;
+	*)
+		echo >&2 "invalid terminal type '$terminal_type'"
+		exit 1
+esac
 
 log=$1
 #png_file=$log-$(date -Iseconds).png
 png_file=$log.png
 xmin=
 xmax=
-#timefmt='%d/%m/%y %H:%M:%S'
 timefmt='%Y-%m-%d %H:%M:%S'
 log_start=
 if [ -n "$since" ]; then
@@ -110,21 +128,31 @@ if [ -n "$xmin" -o -n "$xmax" ]; then
 fi
 
 title="${titlePrefix}Log start $log_start"
-gnuplot -persist -e "set xdata time;
+
+run_gnuplot() {
+	gnuplot -persist -e "set xdata time;
 set timefmt \"$timefmt\";
 set title '$title' textcolor rgb \"$fg\";
 set key autotitle columnhead textcolor rgb \"$fg\";
-set format x \"%l%p\n%a\";
+set format x \"%l%p\n%a\n%b %d\";
 $xrange;
 set xlabel \"Time (UTC)\" textcolor rgb \"$fg\";
 set ylabel \"Memory use in bytes\" textcolor rgb \"$fg\";
-set terminal png size $width,$height background rgb\"$bg\";
+$set_terminal;
 set border lw 1 lc rgb \"$fg\";
 set xtics textcolor rgb \"$fg\";
 set ytics textcolor rgb \"$fg\";
 set grid linecolor rgb \"gray\";
 
-plot '$log' using 2:\"heap\" with lines, '' using 2:\"used\" with lines;" >$png_file
+plot '$log' using 2:\"heap\" with lines, '' using 2:\"used\" with lines;"
+}
+
+if [ "$terminal_type" = "dumb" ]; then
+	run_gnuplot
+else
+	run_gnuplot >$png_file
+fi
+
 if [ "$view_graph" = t ]; then
 	echo qiv $png_file &&
 	qiv $png_file
