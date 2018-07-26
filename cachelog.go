@@ -55,6 +55,7 @@ var lastTime time.Time
 func checkContinuity(datefmt, date, hms string) {
 	t, err := time.Parse(datefmt, date+" "+hms)
 	if err != nil {
+		fmt.Println(line)
 		log.Fatal(date, hms, err)
 	}
 	if lastTime == firstTime {
@@ -73,11 +74,13 @@ func checkContinuity(datefmt, date, hms string) {
 	lastTime = t
 }
 
+var line string
+
 func main() {
 	defer func() {
 		r := recover()
 		if r != nil {
-			fmt.Fprintf(os.Stderr, "PANIC %v\n%s", r, debug.Stack())
+			fmt.Fprintf(os.Stderr, "%s\nPANIC %v\n%s", line, r, debug.Stack())
 		}
 		os.Exit(1)
 	}()
@@ -125,7 +128,7 @@ func main() {
 
 		r := bufio.NewScanner(src)
 		for r.Scan() {
-			line := r.Text()
+			line = r.Text()
 			if !strings.Contains(line, `space.cache-clean] Current heap size`) {
 				continue
 			}
