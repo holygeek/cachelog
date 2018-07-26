@@ -24,8 +24,16 @@ func exactToBytes(str string) float32 {
 }
 
 func toBytes(str string) float32 {
-	n, err := strconv.ParseFloat(str[0:len(str)-2], 32)
+	i := 0
+	for ii, r := range str {
+		if r < '0' || r > '9' {
+			i = ii
+			break
+		}
+	}
+	n, err := strconv.ParseFloat(str[0:i], 32)
 	if err != nil {
+		log.Println("str", str)
 		panic(err)
 		log.Fatal(str, err)
 	}
