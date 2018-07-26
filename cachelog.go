@@ -7,7 +7,6 @@ import (
 	"io"
 	"log"
 	"os"
-	"regexp"
 	"runtime/debug"
 	"strconv"
 	"strings"
@@ -85,7 +84,6 @@ func main() {
 
 	log.SetFlags(log.Lshortfile)
 	ret := 0
-	re := regexp.MustCompile(`space\.cache-clean\] Current heap size`)
 	var heap, free, used float32
 	pid := "none"
 
@@ -128,7 +126,7 @@ func main() {
 		r := bufio.NewScanner(src)
 		for r.Scan() {
 			line := r.Text()
-			if !re.MatchString(line) {
+			if !strings.Contains(line, `space.cache-clean] Current heap size`) {
 				continue
 			}
 			v3_9log := line[0] == '['
